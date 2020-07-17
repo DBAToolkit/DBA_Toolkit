@@ -1,0 +1,24 @@
+
+CREATE PROCEDURE [DBA].[copy_permissions]
+@SourceObject nvarchar(max),
+@DestinationObject nvarchar(max)
+AS
+BEGIN
+	--COPY PERMISSIONS FROM ONE OBJECT TO ANOTHER OBJECT
+	DECLARE @TSQL nvarchar(max);
+	DECLARE c1 CURSOR READ_ONLY FOR
+		SELECT A.[TSQL]
+		FROM [DBA].[view_script_copy_permissions] A
+		WHERE SourceObject = @SourceObject
+	OPEN c1
+		FETCH NEXT FROM c1 INTO @TSQL
+		WHILE @@FETCH_STATUS = 0
+		BEGIN
+			SET @TSQL = REPLACE(@TSQL,'@DestinationObject', @DestinationObject)
+			SELECT @TSQL
+			--EXEC sp_executesql @TSQL;
+		FETCH NEXT FROM c1 INTO @TSQL
+		END	
+	CLOSE c1
+	DEALLOCATE c1
+END
