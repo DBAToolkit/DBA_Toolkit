@@ -1,4 +1,40 @@
 
+/*
+--------------------------------------------------------
+DBA_Toolkit - Copy Permissions
+https://github.com/DBAToolkit/DBA_Toolkit
+--------------------------------------------------------
+Create a procedure to make it easy to copy all permissions
+from one object in a database to another object in the same
+database.  You can alter the procedure to either return the
+TSQL commands, or actually execute the change.
+--------------------------------------------------------
+*/
+
+
+CREATE SCHEMA [DBA]
+
+CREATE VIEW [DBA].[view_script_copy_permissions]
+AS
+SELECT
+	A.[permission_name] AS 'Permission'
+	,A.[state_desc] AS 'Action'
+	,CONCAT('[', C.[name], + '].[', B.[name], ']') AS 'SourceObject'
+	,CONCAT('[', D.[name], ']') AS 'PrincipalName'
+	,CONCAT( A.[state_desc], ' ', A.[permission_name], ' ON @DestinationObject TO [', D.name,  ']') COLLATE SQL_Latin1_General_CP1_CI_AS AS 'TSQL'
+
+FROM sys.database_permissions A
+INNER JOIN sys.objects B
+	ON B.object_id = A.major_id
+INNER JOIN sys.schemas C
+	ON C.schema_id = B.schema_id
+INNER JOIN sys.database_principals D
+	ON A.grantee_principal_id = D.principal_id
+WHERE
+	A.permission_name = 'SELECT'
+	AND A.class = 1
+GO
+
 CREATE PROCEDURE [DBA].[copy_permissions]
 @SourceObject nvarchar(max),
 @DestinationObject nvarchar(max)
